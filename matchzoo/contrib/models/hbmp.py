@@ -1,5 +1,5 @@
 """HBMP model."""
-import keras
+import tensorflow.keras as keras
 import typing
 
 from matchzoo.engine import hyper_spaces
