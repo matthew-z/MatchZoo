@@ -46,11 +46,13 @@ class BasicPreprocessor(BasePreprocessor):
         >>> preprocessor.context['vocab_size']
         226
         >>> processed_train_data = preprocessor.transform(train_data,
-        ...                                               verbose=0)
+        ...                                               verbose=0,
+        ...                                               drop_invalid=True)
         >>> type(processed_train_data)
         <class 'matchzoo.data_pack.data_pack.DataPack'>
         >>> test_data_transformed = preprocessor.transform(test_data,
-        ...                                                verbose=0)
+        ...                                                verbose=0,
+        ...                                                drop_invalid=False)
         >>> type(test_data_transformed)
         <class 'matchzoo.data_pack.data_pack.DataPack'>
 
@@ -113,7 +115,8 @@ class BasicPreprocessor(BasePreprocessor):
 
         return self
 
-    def transform(self, data_pack: DataPack, verbose: int = 1) -> DataPack:
+    def transform(self, data_pack: DataPack, drop_invalid: bool = False,
+                  verbose: int = 1) -> DataPack:
         """
         Apply transformation on data, create fixed length representation.
 
@@ -146,4 +149,6 @@ class BasicPreprocessor(BasePreprocessor):
         data_pack.right['length_right'] = \
             data_pack.right['length_right'].apply(
                 lambda val: min(val, max_len_right))
+        if drop_invalid:
+            data_pack.drop_invalid(inplace=True)
         return data_pack
