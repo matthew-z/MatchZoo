@@ -1,8 +1,8 @@
 """An implementation of DRMM Model."""
 import typing
 
-import keras
-import keras.backend as K
+import tensorflow as tf
+import tensorflow.keras.backend as K
 
 from matchzoo.engine.base_model import BaseModel
 from matchzoo.engine.param import Param
@@ -80,18 +80,18 @@ class DRMM(BaseModel):
         dense_output = self._make_multi_layer_perceptron_layer()(match_hist)
 
         # shape = [B, 1, 1]
-        dot_score = keras.layers.Dot(axes=[1, 1])(
+        dot_score = tf.keras.layers.Dot(axes=[1, 1])(
             [attention_probs, dense_output])
 
-        flatten_score = keras.layers.Flatten()(dot_score)
+        flatten_score = tf.keras.layers.Flatten()(dot_score)
 
         x_out = self._make_output_layer()(flatten_score)
-        self._backend = keras.Model(inputs=[query, match_hist], outputs=x_out)
+        self._backend = tf.keras.Model(inputs=[query, match_hist], outputs=x_out)
 
     @classmethod
     def attention_layer(cls, attention_input: typing.Any,
                         attention_mask: typing.Any = None
-                        ) -> keras.layers.Layer:
+                        ) -> tf.keras.layers.Layer:
         """
         Performs attention on the input.
 
@@ -100,7 +100,7 @@ class DRMM(BaseModel):
         :return: The masked output tensor.
         """
         # shape = [B, L, 1]
-        dense_input = keras.layers.Dense(1, use_bias=False)(attention_input)
+        dense_input = tf.keras.layers.Dense(1, use_bias=False)(attention_input)
         if attention_mask is not None:
             # Since attention_mask is 1.0 for positions we want to attend and
             # 0.0 for masked positions, this operation will create a tensor
@@ -108,13 +108,13 @@ class DRMM(BaseModel):
             # masked positions.
 
             # shape = [B, L, 1]
-            dense_input = keras.layers.Lambda(
+            dense_input = tf.keras.layers.Lambda(
                 lambda x: x + (1.0 - attention_mask) * -10000.0,
                 name="attention_mask"
             )(dense_input)
         # shape = [B, L, 1]
-        attention_probs = keras.layers.Lambda(
-            lambda x: keras.layers.activations.softmax(x, axis=1),
+        attention_probs = tf.keras.layers.Lambda(
+            lambda x: tf.keras.layers.activations.softmax(x, axis=1),
             output_shape=lambda s: (s[0], s[1], s[2]),
             name="attention_probs"
         )(dense_input)

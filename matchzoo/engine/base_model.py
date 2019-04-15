@@ -6,8 +6,7 @@ from pathlib import Path
 
 import dill
 import numpy as np
-import keras
-import keras.backend as K
+import tensorflow as tf
 import pandas as pd
 
 import matchzoo
@@ -24,7 +23,7 @@ class BaseModel(abc.ABC):
     """
     Abstract base class of all MatchZoo models.
 
-    MatchZoo models are wrapped over keras models, and the actual keras model
+    MatchZoo models are wrapped over tf.keras models, and the actual tf.keras model
     built can be accessed by `model.backend`. `params` is a set of model
     hyper-parameters that deterministically builds a model. In other words,
     `params['model_class'](params=params)` of the same `params` always create
@@ -32,7 +31,7 @@ class BaseModel(abc.ABC):
 
     :param params: Model hyper-parameters. (default: return value from
         :meth:`get_default_params`)
-    :param backend: A keras model as the model backend. Usually not passed as
+    :param backend: A tf.keras model as the model backend. Usually not passed as
         an argument.
 
     Example:
@@ -54,7 +53,7 @@ class BaseModel(abc.ABC):
     def __init__(
         self,
         params: typing.Optional[ParamTable] = None,
-        backend: typing.Optional[keras.models.Model] = None
+        backend: typing.Optional[tf.keras.models.Model] = None
     ):
         """Init."""
         self._params = params or self.get_default_params()
@@ -184,8 +183,8 @@ class BaseModel(abc.ABC):
         self._params = val
 
     @property
-    def backend(self) -> keras.models.Model:
-        """:return model backend, a keras model instance."""
+    def backend(self) -> tf.keras.models.Model:
+        """:return model backend, a tf.keras model instance."""
         if not self._backend:
             raise ValueError("Backend not found."
                              "Please build the model first.")
@@ -200,9 +199,9 @@ class BaseModel(abc.ABC):
         """
         Compile model for training.
 
-        Only `keras` native metrics are compiled together with backend.
+        Only `tf.keras` native metrics are compiled together with backend.
         MatchZoo metrics are evaluated only through :meth:`evaluate`.
-        Notice that `keras` count `loss` as one of the metrics while MatchZoo
+        Notice that `tf.keras` count `loss` as one of the metrics while MatchZoo
         :class:`matchzoo.engine.BaseTask` does not.
 
         Examples:
@@ -227,11 +226,11 @@ class BaseModel(abc.ABC):
         epochs: int = 1,
         verbose: int = 1,
         **kwargs
-    ) -> keras.callbacks.History:
+    ) -> tf.keras.callbacks.History:
         """
         Fit the model.
 
-        See :meth:`keras.models.Model.fit` for more details.
+        See :meth:`tf.keras.models.Model.fit` for more details.
 
         :param x: input data.
         :param y: labels.
@@ -240,9 +239,9 @@ class BaseModel(abc.ABC):
         :param verbose: 0, 1, or 2. Verbosity mode. 0 = silent, 1 = verbose,
             2 = one log line per epoch.
 
-        Key word arguments not listed above will be propagated to keras's fit.
+        Key word arguments not listed above will be propagated to tf.keras's fit.
 
-        :return: A `keras.callbacks.History` instance. Its history attribute
+        :return: A `tf.keras.callbacks.History` instance. Its history attribute
             contains all information collected during training.
         """
         return self._backend.fit(x=x, y=y,
@@ -255,11 +254,11 @@ class BaseModel(abc.ABC):
         epochs: int = 1,
         verbose: int = 1,
         **kwargs
-    ) -> keras.callbacks.History:
+    ) -> tf.keras.callbacks.History:
         """
         Fit the model with matchzoo `generator`.
 
-        See :meth:`keras.models.Model.fit_generator` for more details.
+        See :meth:`tf.keras.models.Model.fit_generator` for more details.
 
         :param generator: A generator, an instance of
             :class:`engine.DataGenerator`.
@@ -267,7 +266,7 @@ class BaseModel(abc.ABC):
         :param verbose: 0, 1, or 2. Verbosity mode. 0 = silent, 1 = verbose,
             2 = one log line per epoch.
 
-        :return: A `keras.callbacks.History` instance. Its history attribute
+        :return: A `tf.keras.callbacks.History` instance. Its history attribute
             contains all information collected during training.
         """
         return self._backend.fit_generator(
@@ -324,7 +323,7 @@ class BaseModel(abc.ABC):
         y_pred = self.predict(x, batch_size)
 
         for metric in keras_metrics:
-            metric_func = keras.metrics.get(metric)
+            metric_func = tf.keras.metrics.get(metric)
             result[metric] = K.eval(K.mean(
                 metric_func(K.variable(y), K.variable(y_pred))))
 
@@ -388,7 +387,7 @@ class BaseModel(abc.ABC):
         """
         Generate output predictions for the input samples.
 
-        See :meth:`keras.models.Model.predict` for more details.
+        See :meth:`tf.keras.models.Model.predict` for more details.
 
         :param x: input data
         :param batch_size: number of samples per gradient update
@@ -402,7 +401,7 @@ class BaseModel(abc.ABC):
 
         A saved model is represented as a directory with two files. One is a
         model parameters file saved by `pickle`, and the other one is a model
-        h5 file saved by `keras`.
+        h5 file saved by `tf.keras`.
 
         :param dirpath: directory path of the saved model
 
@@ -432,7 +431,7 @@ class BaseModel(abc.ABC):
 
     def get_embedding_layer(
         self, name: str = 'embedding'
-    ) -> keras.layers.Layer:
+    ) -> tf.keras.layers.Layer:
         """
         Get the embedding layer.
 
@@ -457,9 +456,9 @@ class BaseModel(abc.ABC):
 
         Load an embedding matrix into the model's embedding layer. The name
         of the embedding layer is specified by `name`. For models with only
-        one embedding layer, set `name='embedding'` when creating the keras
+        one embedding layer, set `name='embedding'` when creating the tf.keras
         layer, and use the default `name` when load the matrix. For models
-        with more than one embedding layers, initialize keras layer with
+        with more than one embedding layers, initialize tf.keras layer with
         different layer names, and set `name` accordingly to load a matrix
         to a chosen layer.
 
@@ -495,23 +494,23 @@ class BaseModel(abc.ABC):
                 print(f"Parameter \"{name}\" set to {default_val}.")
 
     def _make_inputs(self) -> list:
-        input_left = keras.layers.Input(
+        input_left = tf.keras.layers.Input(
             name='text_left',
             shape=self._params['input_shapes'][0]
         )
-        input_right = keras.layers.Input(
+        input_right = tf.keras.layers.Input(
             name='text_right',
             shape=self._params['input_shapes'][1]
         )
         return [input_left, input_right]
 
-    def _make_output_layer(self) -> keras.layers.Layer:
-        """:return: a correctly shaped keras dense layer for model output."""
+    def _make_output_layer(self) -> tf.keras.layers.Layer:
+        """:return: a correctly shaped tf.keras dense layer for model output."""
         task = self._params['task']
         if isinstance(task, tasks.Classification):
-            return keras.layers.Dense(task.num_classes, activation='softmax')
+            return tf.keras.layers.Dense(task.num_classes, activation='softmax')
         elif isinstance(task, tasks.Ranking):
-            return keras.layers.Dense(1, activation='linear')
+            return tf.keras.layers.Dense(1, activation='linear')
         else:
             raise ValueError(f"{task} is not a valid task type."
                              f"Must be in `Ranking` and `Classification`.")
@@ -520,8 +519,8 @@ class BaseModel(abc.ABC):
         self,
         name: str = 'embedding',
         **kwargs
-    ) -> keras.layers.Layer:
-        return keras.layers.Embedding(
+    ) -> tf.keras.layers.Layer:
+        return tf.keras.layers.Embedding(
             self._params['embedding_input_dim'],
             self._params['embedding_output_dim'],
             trainable=self._params['embedding_trainable'],
@@ -529,7 +528,7 @@ class BaseModel(abc.ABC):
             **kwargs
         )
 
-    def _make_multi_layer_perceptron_layer(self) -> keras.layers.Layer:
+    def _make_multi_layer_perceptron_layer(self) -> tf.keras.layers.Layer:
         # TODO: do not create new layers for a second call
         if not self._params['with_multi_layer_perceptron']:
             raise AttributeError(
@@ -538,9 +537,9 @@ class BaseModel(abc.ABC):
         def _wrapper(x):
             activation = self._params['mlp_activation_func']
             for _ in range(self._params['mlp_num_layers']):
-                x = keras.layers.Dense(self._params['mlp_num_units'],
+                x = tf.keras.layers.Dense(self._params['mlp_num_units'],
                                        activation=activation)(x)
-            return keras.layers.Dense(self._params['mlp_num_fan_out'],
+            return tf.keras.layers.Dense(self._params['mlp_num_fan_out'],
                                       activation=activation)(x)
 
         return _wrapper

@@ -3,20 +3,20 @@ import typing
 from pathlib import Path
 
 import numpy as np
-import keras
+import tensorflow as tf
 
 import matchzoo
 from matchzoo.engine.base_model import BaseModel
 
 
-class EvaluateAllMetrics(keras.callbacks.Callback):
+class EvaluateAllMetrics(tf.keras.callbacks.Callback):
     """
     Callback to evaluate all metrics.
 
     MatchZoo metrics can not be evaluated batch-wise since they require
     dataset-level information. As a result, MatchZoo metrics are not
     evaluated automatically when a Model `fit`. When this callback is used,
-    all metrics, including MatchZoo metrics and Keras metrics, are evluated
+    all metrics, including MatchZoo metrics and tf.Keras metrics, are evluated
     once every `once_every` epochs.
 
     :param model: Model to evaluate.
@@ -25,7 +25,7 @@ class EvaluateAllMetrics(keras.callbacks.Callback):
     :param once_every: Evaluation only triggers when `epoch % once_every == 0`.
         (default: 1, i.e. evaluate on every epoch's end)
     :param batch_size: Number of samples per evaluation. This only affects the
-        evaluation of Keras metrics, since MatchZoo metrics are always
+        evaluation of tf.Keras metrics, since MatchZoo metrics are always
         evaluated using the full data.
     :param model_save_path: Directory path to save the model after each
         evaluate callback, (default: None, i.e., no saving.)

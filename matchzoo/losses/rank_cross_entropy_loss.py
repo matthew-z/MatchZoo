@@ -1,7 +1,9 @@
 """The rank cross entropy loss."""
 import numpy as np
 
-from keras import layers, backend as K
+import tensorflow as tf
+import tensorflow.keras.backend as K
+from tensorflow.keras import layers
 
 
 class RankCrossEntropyLoss(object):
@@ -9,12 +11,11 @@ class RankCrossEntropyLoss(object):
     Rank cross entropy loss.
 
     Examples:
-        >>> from keras import backend as K
         >>> softmax = lambda x: np.exp(x)/np.sum(np.exp(x), axis=0)
-        >>> x_pred = K.variable(np.array([[1.0], [1.2], [0.8]]))
-        >>> x_true = K.variable(np.array([[1], [0], [0]]))
+        >>> x_pred = tf.variable(np.array([[1.0], [1.2], [0.8]]))
+        >>> x_true = tf.variable(np.array([[1], [0], [0]]))
         >>> expect = -np.log(softmax(np.array([[1.0], [1.2], [0.8]])))
-        >>> loss = K.eval(RankCrossEntropyLoss(num_neg=2)(x_true, x_pred))
+        >>> loss = tf.eval(RankCrossEntropyLoss(num_neg=2)(x_true, x_pred))
         >>> np.isclose(loss, expect[0]).all()
         True
 

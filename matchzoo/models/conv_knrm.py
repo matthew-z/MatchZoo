@@ -1,7 +1,6 @@
 """ConvKNRM model."""
 
-import keras
-import keras.backend as K
+import tensorflow as tf
 
 from .knrm import KNRM
 from matchzoo.engine.param import Param
@@ -30,7 +29,7 @@ class ConvKNRM(KNRM):
 
     """
 
-    def get_default_params(cls):
+    def get_default_params(cls) -> ParamTable:
         """Get default parameters."""
         params = super().get_default_params()
         params.add(Param(name='filters', value=128,
@@ -59,7 +58,7 @@ class ConvKNRM(KNRM):
         q_convs = []
         d_convs = []
         for i in range(self._params['max_ngram']):
-            c = keras.layers.Conv1D(
+            c = tf.keras.layers.Conv1D(
                 self._params['filters'], i + 1,
                 activation=self._params['conv_activation_func'],
                 padding='same'
@@ -75,7 +74,7 @@ class ConvKNRM(KNRM):
                     continue
                 q_ngram = q_convs[qi]
                 d_ngram = d_convs[di]
-                mm = keras.layers.Dot(axes=[2, 2],
+                mm = tf.keras.layers.Dot(axes=[2, 2],
                                       normalize=True)([q_ngram, d_ngram])
 
                 for i in range(self._params['kernel_num']):
@@ -86,14 +85,14 @@ class ConvKNRM(KNRM):
                         sigma = self._params['exact_sigma']
                         mu = 1.0
                     mm_exp = self._kernel_layer(mu, sigma)(mm)
-                    mm_doc_sum = keras.layers.Lambda(
-                        lambda x: K.tf.reduce_sum(x, 2))(
+                    mm_doc_sum = tf.keras.layers.Lambda(
+                        lambda x: tf.reduce_sum(x, 2))(
                         mm_exp)
-                    mm_log = keras.layers.Activation(K.tf.log1p)(mm_doc_sum)
-                    mm_sum = keras.layers.Lambda(
-                        lambda x: K.tf.reduce_sum(x, 1))(mm_log)
+                    mm_log = tf.keras.layers.Activation(tf.log1p)(mm_doc_sum)
+                    mm_sum = tf.keras.layers.Lambda(
+                        lambda x: tf.reduce_sum(x, 1))(mm_log)
                     KM.append(mm_sum)
 
-        phi = keras.layers.Lambda(lambda x: K.tf.stack(x, 1))(KM)
+        phi = tf.keras.layers.Lambda(lambda x: tf.stack(x, 1))(KM)
         out = self._make_output_layer()(phi)
-        self._backend = keras.Model(inputs=[query, doc], outputs=[out])
+        self._backend = tf.keras.Model(inputs=[query, doc], outputs=[out])

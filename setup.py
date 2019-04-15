@@ -17,8 +17,8 @@ with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 install_requires = [
-    'keras >= 2.2.4',
     'nltk >= 3.2.3',
+    'tensorflow >= 1.13',
     'numpy >= 1.14',
     'tqdm >= 4.19.4',
     'dill >= 0.2.7.1',

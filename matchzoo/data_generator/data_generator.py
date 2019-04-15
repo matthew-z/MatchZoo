@@ -3,7 +3,7 @@
 import math
 import typing
 
-import keras
+import tensorflow as tf
 import numpy as np
 import pandas as pd
 
@@ -11,7 +11,7 @@ import matchzoo as mz
 from matchzoo.data_generator.callbacks import Callback
 
 
-class DataGenerator(keras.utils.Sequence):
+class DataGenerator(tf.keras.utils.Sequence):
     """
     Data Generator.
 

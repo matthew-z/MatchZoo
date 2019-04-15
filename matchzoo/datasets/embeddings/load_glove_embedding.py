@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-import keras
+import tensorflow as tf
 
 import matchzoo as mz
 
@@ -20,7 +20,7 @@ def load_glove_embedding(dimension: int = 50) -> mz.embedding.Embedding:
     file_name = 'glove.6B.' + str(dimension) + 'd.txt'
     file_path = (Path(mz.USER_DATA_DIR) / 'glove').joinpath(file_name)
     if not file_path.exists():
-        keras.utils.data_utils.get_file('glove_embedding',
+        tf.keras.utils.get_file('glove_embedding',
                                         _glove_embedding_url,
                                         extract=True,
                                         cache_dir=mz.USER_DATA_DIR,
