@@ -1,1 +1,2 @@
-tutorials/ linguist-vendored=false
+tutorials/* linguist-vendored=false
+tutorials/wikiqa/* linguist-vendored=false
