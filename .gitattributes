@@ -1,2 +1,1 @@
-tutorials/* linguist-vendored=false
-tutorials/wikiqa/* linguist-vendored=false
+*.ipynb linguist-vendored=false
