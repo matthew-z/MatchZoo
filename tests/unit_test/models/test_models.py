@@ -1,5 +1,5 @@
 """
-These tests are simplied because the original verion takes too much time to
+These tests are simplified because the original version takes too much time to
 run, making CI fails as it reaches the time limit.
 """
 
@@ -35,13 +35,15 @@ def embedding():
 
 @pytest.fixture(scope='module')
 def setup(task, model_class, train_raw, embedding):
-    return mz.auto.prepare(
+    print("Building model")
+    s =  mz.auto.prepare(
         task=task,
         model_class=model_class,
         data_pack=train_raw,
         embedding=embedding
     )
-
+    print("Built model")
+    return s
 
 @pytest.fixture(scope='module')
 def model(setup):
@@ -65,14 +67,16 @@ def embedding_matrix(setup):
 
 @pytest.fixture(scope='module')
 def data(train_raw, preprocessor, gen_builder):
-    return gen_builder.build(preprocessor.transform(train_raw))[0]
+    data= gen_builder.build(preprocessor.transform(train_raw))[0]
+    print("Built Data")
+    return data
 
 
 @pytest.mark.slow
 def test_model_fit_eval_predict(model, data):
     x, y = data
     batch_size = len(x['id_left'])
-    assert model.fit(x, y, batch_size=batch_size, verbose=0)
+    assert model.fit(x, y, batch_size=batch_size, verbose=1)
     assert model.evaluate(x, y, batch_size=batch_size)
     assert model.predict(x, batch_size=batch_size) is not None
 
