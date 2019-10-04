@@ -27,11 +27,10 @@ install:
   - python3 -m nltk.downloader stopwords
 
 script:
-  - free
   - stty cols 80
   - export COLUMNS=80
+  - make push
 #  - if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then travis_wait 30  make push; fi
-  - pytest -v -s  -m 'not cron' tests/
 #  - if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then travis_wait 30  make cron; fi
 
 
