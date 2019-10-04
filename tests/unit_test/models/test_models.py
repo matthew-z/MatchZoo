@@ -7,9 +7,10 @@ import pytest
 import copy
 from pathlib import Path
 import shutil
+import gc
 
 import matchzoo as mz
-
+from keras import backend as K
 
 @pytest.fixture(scope='module', params=[
     mz.tasks.Ranking(loss=mz.losses.RankCrossEntropyLoss(num_neg=2)),
@@ -36,6 +37,10 @@ def embedding():
 
 @pytest.fixture(scope='module')
 def setup(task, model_class, train_raw, embedding):
+    # explicitly clean memory to avoid OOM during CI
+    gc.collect()
+    K.clear_session()
+
     return mz.auto.prepare(
         task=task,
         model_class=model_class,
@@ -71,6 +76,7 @@ def data(train_raw, preprocessor, gen_builder):
 
 @pytest.mark.slow
 def test_model_fit_eval_predict(model, data):
+
     x, y = data
     batch_size = len(x['id_left'])
     assert model.fit(x, y, batch_size=batch_size, verbose=0)
