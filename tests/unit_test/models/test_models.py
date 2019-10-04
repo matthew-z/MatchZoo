@@ -7,6 +7,7 @@ import pytest
 import copy
 from pathlib import Path
 import shutil
+import gc
 
 import matchzoo as mz
 from keras import backend as K
@@ -76,6 +77,7 @@ def data(train_raw, preprocessor, gen_builder):
 
 @pytest.mark.slow
 def test_model_fit_eval_predict(model, data):
+    gc.collect()
     x, y = data
     batch_size = len(x['id_left'])
     print("start to fit")
