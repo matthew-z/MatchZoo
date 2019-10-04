@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 
 import matchzoo as mz
+from keras import backend as K
 
 @pytest.fixture(scope='module', params=[
     mz.tasks.Ranking(loss=mz.losses.RankCrossEntropyLoss(num_neg=2)),
@@ -35,6 +36,7 @@ def embedding():
 
 @pytest.fixture(scope='module')
 def setup(task, model_class, train_raw, embedding):
+    K.clear_session()
     print("Building model")
     s =  mz.auto.prepare(
         task=task,
@@ -67,7 +69,7 @@ def embedding_matrix(setup):
 
 @pytest.fixture(scope='module')
 def data(train_raw, preprocessor, gen_builder):
-    data= gen_builder.build(preprocessor.transform(train_raw))[0]
+    data= gen_builder.build(preprocessor.transform(train_raw, verbose=0))[0]
     print("Built Data")
     return data
 
@@ -76,6 +78,7 @@ def data(train_raw, preprocessor, gen_builder):
 def test_model_fit_eval_predict(model, data):
     x, y = data
     batch_size = len(x['id_left'])
+    print("start to fit")
     assert model.fit(x, y, batch_size=batch_size, verbose=1)
     assert model.evaluate(x, y, batch_size=batch_size)
     assert model.predict(x, batch_size=batch_size) is not None
