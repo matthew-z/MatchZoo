@@ -38,7 +38,7 @@ def embedding():
 @pytest.fixture(scope='module')
 def setup(task, model_class, train_raw, embedding):
     # explicitly clean memory to avoid OOM during CI
-    K.clear_session()
+    # K.clear_session()
 
     return mz.auto.prepare(
         task=task,
