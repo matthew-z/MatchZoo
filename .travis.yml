@@ -13,7 +13,7 @@ matrix:
     - os: osx
   include:
     - os: linux
-      dist: trusty
+      dist: xenial
       python: 3.6
     - os: osx
       osx_image: xcode10.2
@@ -27,11 +27,12 @@ install:
   - python3 -m nltk.downloader stopwords
 
 script:
+  - free
   - stty cols 80
   - export COLUMNS=80
-  - if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then make push; fi
-  - if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then make push; fi
-  - if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then make cron; fi
+#  - if [ "$TRAVIS_EVENT_TYPE" == "pull_request" ]; then travis_wait 30  make push; fi
+  - make push
+#  - if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then travis_wait 30  make cron; fi
 
 
 after_success:

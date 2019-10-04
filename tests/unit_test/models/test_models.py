@@ -10,7 +10,6 @@ import shutil
 
 import matchzoo as mz
 
-
 @pytest.fixture(scope='module', params=[
     mz.tasks.Ranking(loss=mz.losses.RankCrossEntropyLoss(num_neg=2)),
     mz.tasks.Classification(num_classes=2),

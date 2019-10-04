@@ -34,12 +34,12 @@ class HBMP(BaseModel):
         params.add(Param(name='alpha', value=0.1,
                          desc="Negative slope coefficient of LeakyReLU "
                               "function."))
-        params.add(Param(name='mlp_num_layers', value=3,
+        params.add(Param(name='mlp_num_layers', value=2,
                          desc="The number of layers of mlp."))
-        params.add(Param(name='mlp_num_units', value=[10, 10],
+        params.add(Param(name='mlp_num_units', value=[5, 5],
                          desc="The hidden size of the FC layers, but not "
                               "include the final layer."))
-        params.add(Param(name='lstm_num_units', value=5,
+        params.add(Param(name='lstm_num_units', value=3,
                          desc="The hidden size of the LSTM layer."))
         params.add(Param(
             name='dropout_rate', value=0.1,
