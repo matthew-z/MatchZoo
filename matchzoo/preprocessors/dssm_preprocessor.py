@@ -4,9 +4,9 @@ from tqdm import tqdm
 
 from matchzoo.data_pack import DataPack
 from matchzoo.engine.base_preprocessor import BasePreprocessor
-from .chain_transform import chain_transform
-from .build_vocab_unit import build_vocab_unit
 from . import units
+from .build_vocab_unit import build_vocab_unit
+from .chain_transform import ChainTransform
 
 tqdm.pandas()
 
@@ -14,7 +14,8 @@ tqdm.pandas()
 class DSSMPreprocessor(BasePreprocessor):
     """DSSM Model preprocessor."""
 
-    def __init__(self, with_word_hashing: bool = True):
+    def __init__(self, with_word_hashing: bool = True,
+                 multiprocessing: bool = False):
         """
         DSSM Model preprocessor.
 
@@ -24,6 +25,7 @@ class DSSMPreprocessor(BasePreprocessor):
         :class:`matchzoo.preprocessor.units.WordHashing`.
 
         :param with_word_hashing: Include a word hashing step if `True`.
+        :param multiprocessing: Bool, Whether to use multi-core.
 
         Example:
             >>> import matchzoo as mz
@@ -41,7 +43,7 @@ class DSSMPreprocessor(BasePreprocessor):
             <class 'matchzoo.data_pack.data_pack.DataPack'>
 
         """
-        super().__init__()
+        super().__init__(multiprocessing=multiprocessing)
         self._with_word_hashing = with_word_hashing
 
     def fit(self, data_pack: DataPack, verbose: int = 1):
@@ -53,8 +55,11 @@ class DSSMPreprocessor(BasePreprocessor):
         :return: class:`DSSMPreprocessor` instance.
         """
 
-        func = chain_transform(self._default_units())
-        data_pack = data_pack.apply_on_text(func, verbose=verbose)
+        func = ChainTransform(self._default_units())
+        data_pack = data_pack.apply_on_text(
+            func,
+            verbose=verbose,
+            multiprocessing=self.multiprocessing)
         vocab_unit = build_vocab_unit(data_pack, verbose=verbose)
 
         self._context['vocab_unit'] = vocab_unit
@@ -78,8 +83,9 @@ class DSSMPreprocessor(BasePreprocessor):
         if self._with_word_hashing:
             term_index = self._context['vocab_unit'].state['term_index']
             units_.append(units.WordHashing(term_index))
-        func = chain_transform(units_)
-        data_pack.apply_on_text(func, inplace=True, verbose=verbose)
+        func = ChainTransform(units_)
+        data_pack.apply_on_text(func, inplace=True, verbose=verbose,
+                                multiprocessing=self.multiprocessing)
         return data_pack
 
     @classmethod

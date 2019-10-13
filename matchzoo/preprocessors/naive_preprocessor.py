@@ -2,11 +2,11 @@
 
 from tqdm import tqdm
 
-from matchzoo.engine.base_preprocessor import BasePreprocessor
 from matchzoo import DataPack
-from .chain_transform import chain_transform
-from .build_vocab_unit import build_vocab_unit
+from matchzoo.engine.base_preprocessor import BasePreprocessor
 from . import units
+from .build_vocab_unit import build_vocab_unit
+from .chain_transform import ChainTransform
 
 tqdm.pandas()
 
@@ -39,8 +39,10 @@ class NaivePreprocessor(BasePreprocessor):
         :param verbose: Verbosity.
         :return: class:`NaivePreprocessor` instance.
         """
-        func = chain_transform(self._default_units())
-        data_pack = data_pack.apply_on_text(func, verbose=verbose)
+        func = ChainTransform(self._default_units())
+        data_pack = data_pack.apply_on_text(
+            func, verbose=verbose,
+            multiprocessing=self.multiprocessing)
         vocab_unit = build_vocab_unit(data_pack, verbose=verbose)
         self._context['vocab_unit'] = vocab_unit
         return self
@@ -57,5 +59,6 @@ class NaivePreprocessor(BasePreprocessor):
         units_ = self._default_units()
         units_.append(self._context['vocab_unit'])
         units_.append(units.FixedLength(text_length=30, pad_mode='post'))
-        func = chain_transform(units_)
-        return data_pack.apply_on_text(func, verbose=verbose)
+        func = ChainTransform(units_)
+        return data_pack.apply_on_text(func, verbose=verbose,
+                                       multiprocessing=self.multiprocessing)
