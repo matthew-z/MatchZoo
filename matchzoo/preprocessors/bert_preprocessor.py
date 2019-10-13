@@ -2,12 +2,12 @@
 
 from tqdm import tqdm
 
-from . import units
-from .chain_transform import chain_transform
 from matchzoo import DataPack
 from matchzoo.engine.base_preprocessor import BasePreprocessor
-from .build_vocab_unit import built_bert_vocab_unit
+from . import units
 from .build_unit_from_data_pack import build_unit_from_data_pack
+from .build_vocab_unit import built_bert_vocab_unit
+from .chain_transform import ChainTransform
 
 tqdm.pandas()
 
@@ -24,6 +24,7 @@ class BertPreprocessor(BasePreprocessor):
                  remove_stop_words: bool = False,
                  lower_case: bool = True,
                  chinese_version: bool = False,
+                 multiprocessing: bool = False
                  ):
         """
         Bert-base Model preprocessor.
@@ -41,7 +42,7 @@ class BertPreprocessor(BasePreprocessor):
             >>> test_data_processed = bert_preprocessor.transform(test_data)
 
         """
-        super().__init__()
+        super().__init__(multiprocessing=multiprocessing)
         self._fixed_length_left = fixed_length_left
         self._fixed_length_right = fixed_length_right
         self._bert_vocab_path = bert_vocab_path
@@ -79,8 +80,10 @@ class BertPreprocessor(BasePreprocessor):
         :param data_pack: Data_pack to be preprocessed.
         :return: class:`BertPreprocessor` instance.
         """
-        data_pack = data_pack.apply_on_text(chain_transform(self._units),
-                                            verbose=verbose)
+        data_pack = data_pack.apply_on_text(
+            ChainTransform(self._units),
+            verbose=verbose,
+            multiprocessing=self.multiprocessing)
         fitted_filter_unit = build_unit_from_data_pack(self._filter_unit,
                                                        data_pack,
                                                        flatten=False,
@@ -105,18 +108,23 @@ class BertPreprocessor(BasePreprocessor):
         :return: Transformed data as :class:`DataPack` object.
         """
         data_pack = data_pack.copy()
-        data_pack.apply_on_text(chain_transform(self._units), inplace=True,
+        data_pack.apply_on_text(ChainTransform(self._units), inplace=True,
+                                multiprocessing=self.multiprocessing,
                                 verbose=verbose)
 
         data_pack.apply_on_text(self._context['filter_unit'].transform,
-                                mode='right', inplace=True, verbose=verbose)
+                                mode='right', inplace=True, verbose=verbose,
+                                multiprocessing=self.multiprocessing)
         data_pack.apply_on_text(self._context['vocab_unit'].transform,
-                                mode='both', inplace=True, verbose=verbose)
+                                mode='both', inplace=True, verbose=verbose,
+                                multiprocessing=self.multiprocessing)
         data_pack.append_text_length(inplace=True, verbose=verbose)
         data_pack.apply_on_text(self._left_fixedlength_unit.transform,
-                                mode='left', inplace=True, verbose=verbose)
+                                mode='left', inplace=True, verbose=verbose,
+                                multiprocessing=self.multiprocessing)
         data_pack.apply_on_text(self._right_fixedlength_unit.transform,
-                                mode='right', inplace=True, verbose=verbose)
+                                mode='right', inplace=True, verbose=verbose,
+                                multiprocessing=self.multiprocessing)
 
         max_len_left = self._fixed_length_left
         max_len_right = self._fixed_length_right

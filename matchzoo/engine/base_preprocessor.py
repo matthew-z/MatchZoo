@@ -38,9 +38,10 @@ class BasePreprocessor(metaclass=abc.ABCMeta):
 
     DATA_FILENAME = 'preprocessor.dill'
 
-    def __init__(self):
+    def __init__(self, multiprocessing=False):
         """Initialization."""
         self._context = {}
+        self.multiprocessing = multiprocessing
 
     @property
     def context(self):

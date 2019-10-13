@@ -1,10 +1,10 @@
 from . import units
-from .dssm_preprocessor import DSSMPreprocessor
-from .naive_preprocessor import NaivePreprocessor
 from .basic_preprocessor import BasicPreprocessor
+from .bert_preprocessor import BertPreprocessor
 from .cdssm_preprocessor import CDSSMPreprocessor
 from .diin_preprocessor import DIINPreprocessor
-from .bert_preprocessor import BertPreprocessor
+from .dssm_preprocessor import DSSMPreprocessor
+from .naive_preprocessor import NaivePreprocessor
 
 
 def list_available() -> list:

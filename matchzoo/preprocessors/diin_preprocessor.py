@@ -1,13 +1,12 @@
 """DIIN Preprocessor."""
 
 from tqdm import tqdm
-import pandas as pd
 
-from matchzoo.engine.base_preprocessor import BasePreprocessor
 from matchzoo import DataPack
-from .build_vocab_unit import build_vocab_unit
-from .chain_transform import chain_transform
+from matchzoo.engine.base_preprocessor import BasePreprocessor
 from . import units
+from .build_vocab_unit import build_vocab_unit
+from .chain_transform import ChainTransform
 
 tqdm.pandas()
 
@@ -18,7 +17,8 @@ class DIINPreprocessor(BasePreprocessor):
     def __init__(self,
                  fixed_length_left: int = 10,
                  fixed_length_right: int = 10,
-                 fixed_length_word: int = 5):
+                 fixed_length_word: int = 5,
+                 multiprocessing: bool = False):
         """
         DIIN Model preprocessor.
 
@@ -27,6 +27,7 @@ class DIINPreprocessor(BasePreprocessor):
         :param fixed_length_right: Integer, maximize length of :attr:'right' in
             the data_pack.
         :param fixed_length_word: Integer, maximize length of each word.
+        :param multiprocessing: Bool, Whether to use multi-core.
 
         Example:
             >>> import matchzoo as mz
@@ -53,7 +54,7 @@ class DIINPreprocessor(BasePreprocessor):
             <class 'matchzoo.data_pack.data_pack.DataPack'>
 
         """
-        super().__init__()
+        super().__init__(multiprocessing=multiprocessing)
         self._fixed_length_left = fixed_length_left
         self._fixed_length_right = fixed_length_right
         self._fixed_length_word = fixed_length_word
@@ -77,8 +78,10 @@ class DIINPreprocessor(BasePreprocessor):
         :param verbose: Verbosity.
         :return: class:'DIINPreprocessor' instance.
         """
-        func = chain_transform(self._units)
-        data_pack = data_pack.apply_on_text(func, mode='both', verbose=verbose)
+        func = ChainTransform(self._units)
+        data_pack = data_pack.apply_on_text(
+            func, mode='both', verbose=verbose,
+            multiprocessing=self.multiprocessing)
 
         vocab_unit = build_vocab_unit(data_pack, verbose=verbose)
         vocab_size = len(vocab_unit.state['term_index'])
@@ -88,7 +91,7 @@ class DIINPreprocessor(BasePreprocessor):
 
         data_pack = data_pack.apply_on_text(
             units.NgramLetter(ngram=1, reduce_dim=True).transform,
-            mode='both', verbose=verbose)
+            mode='both', verbose=verbose, multiprocessing=self.multiprocessing)
         char_unit = build_vocab_unit(data_pack, verbose=verbose)
         self._context['char_unit'] = char_unit
 
@@ -113,14 +116,17 @@ class DIINPreprocessor(BasePreprocessor):
         """
         data_pack = data_pack.copy()
         data_pack.apply_on_text(
-            chain_transform(self._units),
-            mode='both', inplace=True, verbose=verbose)
+            ChainTransform(self._units),
+            mode='both', inplace=True, verbose=verbose,
+            multiprocessing=self.multiprocessing)
 
         # Process character representation
         data_pack.apply_on_text(
             units.NgramLetter(ngram=1, reduce_dim=False).transform,
             rename=('char_left', 'char_right'),
-            mode='both', inplace=True, verbose=verbose)
+            mode='both', inplace=True, verbose=verbose,
+            multiprocessing=self.multiprocessing)
+
         char_index_dict = self._context['char_unit'].state['term_index']
         left_charindex_unit = units.CharacterIndex(
             char_index_dict, self._fixed_length_left, self._fixed_length_word)
@@ -134,7 +140,8 @@ class DIINPreprocessor(BasePreprocessor):
         # Process word representation
         data_pack.apply_on_text(
             self._context['vocab_unit'].transform,
-            mode='both', inplace=True, verbose=verbose)
+            mode='both', inplace=True, verbose=verbose,
+            multiprocessing=self.multiprocessing)
 
         # Process exact match representation
         frame = data_pack.relation.join(
@@ -151,9 +158,11 @@ class DIINPreprocessor(BasePreprocessor):
 
         data_pack.apply_on_text(
             self._left_fixedlength_unit.transform,
-            mode='left', inplace=True, verbose=verbose)
+            mode='left', inplace=True, verbose=verbose,
+            multiprocessing=self.multiprocessing)
         data_pack.apply_on_text(
             self._right_fixedlength_unit.transform,
-            mode='right', inplace=True, verbose=verbose)
+            mode='right', inplace=True, verbose=verbose,
+            multiprocessing=self.multiprocessing)
 
         return data_pack

@@ -2,11 +2,11 @@
 
 from tqdm import tqdm
 
-from . import units
-from .chain_transform import chain_transform
 from matchzoo import DataPack
 from matchzoo.engine.base_preprocessor import BasePreprocessor
+from . import units
 from .build_vocab_unit import build_vocab_unit
+from .chain_transform import ChainTransform
 
 tqdm.pandas()
 
@@ -17,7 +17,8 @@ class CDSSMPreprocessor(BasePreprocessor):
     def __init__(self,
                  fixed_length_left: int = 10,
                  fixed_length_right: int = 40,
-                 with_word_hashing: bool = True):
+                 with_word_hashing: bool = True,
+                 multiprocessing: bool = False):
         """
         CDSSM Model preprocessor.
 
@@ -29,7 +30,7 @@ class CDSSMPreprocessor(BasePreprocessor):
         TODO: doc here.
 
         :param with_word_hashing: Include a word hashing step if `True`.
-
+        :param multiprocessing: Bool, Whether to use multi-core.
         Example:
             >>> import matchzoo as mz
             >>> train_data = mz.datasets.toy.load_data()
@@ -46,7 +47,7 @@ class CDSSMPreprocessor(BasePreprocessor):
             <class 'matchzoo.data_pack.data_pack.DataPack'>
 
         """
-        super().__init__()
+        super().__init__(multiprocessing=multiprocessing)
         self._fixed_length_left = fixed_length_left
         self._fixed_length_right = fixed_length_right
         self._left_fixedlength_unit = units.FixedLength(
@@ -68,7 +69,7 @@ class CDSSMPreprocessor(BasePreprocessor):
         :return: class:`CDSSMPreprocessor` instance.
         """
         fit_units = self._default_units() + [units.NgramLetter()]
-        func = chain_transform(fit_units)
+        func = ChainTransform(fit_units)
         data_pack = data_pack.apply_on_text(func, verbose=verbose)
         vocab_unit = build_vocab_unit(data_pack, verbose=verbose)
 
@@ -90,7 +91,7 @@ class CDSSMPreprocessor(BasePreprocessor):
         :return: Transformed data as :class:`DataPack` object.
         """
         data_pack = data_pack.copy()
-        func = chain_transform(self._default_units())
+        func = ChainTransform(self._default_units())
         data_pack.apply_on_text(func, inplace=True, verbose=verbose)
         data_pack.apply_on_text(self._left_fixedlength_unit.transform,
                                 mode='left', inplace=True, verbose=verbose)
@@ -100,7 +101,7 @@ class CDSSMPreprocessor(BasePreprocessor):
         if self._with_word_hashing:
             term_index = self._context['vocab_unit'].state['term_index']
             post_units.append(units.WordHashing(term_index))
-        data_pack.apply_on_text(chain_transform(post_units),
+        data_pack.apply_on_text(ChainTransform(post_units),
                                 inplace=True, verbose=verbose)
         return data_pack
 

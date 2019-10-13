@@ -22,7 +22,7 @@ from . import data_generator
 from .data_generator import DataGenerator
 from .data_generator import DataGeneratorBuilder
 
-from .preprocessors.chain_transform import chain_transform
+from .preprocessors.chain_transform import ChainTransform
 
 from . import metrics
 from . import losses
