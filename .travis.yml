@@ -13,14 +13,14 @@ matrix:
     - os: osx
   include:
     - os: linux
-      dist: trusty
+      dist: xenial
       python: 3.6
     - os: osx
       osx_image: xcode10.2
       language: shell
 
 install:
-  - pip3 install -U pip
+  - pip3 install -U pip setuptools
   - pip3 install -r requirements.txt
   - python3 -m nltk.downloader punkt
   - python3 -m nltk.downloader wordnet
