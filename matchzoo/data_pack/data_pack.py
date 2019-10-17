@@ -2,6 +2,7 @@
 
 import functools
 import inspect
+import math
 import multiprocessing as mp
 import typing
 from pathlib import Path
@@ -20,12 +21,17 @@ def _apply_on_row(func, data_subset):
     return data_subset.apply(func)
 
 
-def _parallelize_on_rows(data, func, num_of_processes=8, verbose=1, desc=None):
+def _parallelize_on_rows(data, func, num_of_processes=-1, verbose=1, desc=None,
+                         batch_size=10):
     data_splits = filter(lambda x: len(x),
-                         np.array_split(data, num_of_processes))
+                         np.array_split(data,
+                                        math.ceil(len(data) / batch_size)))
     row_func = functools.partial(_apply_on_row, func)
-    pool = mp.Pool(num_of_processes)
-    result = pd.concat(tqdm(pool.imap(row_func, data_splits), desc=desc,
+    if num_of_processes == -1:
+        pool = mp.Pool()
+    else:
+        pool = mp.Pool(num_of_processes)
+    result = pd.concat(tqdm(pool.map(row_func, data_splits), desc=desc,
                             disable=not bool(verbose)))
     pool.close()
     pool.join()

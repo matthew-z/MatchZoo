@@ -26,7 +26,7 @@ def task(request):
 
 @pytest.fixture(scope='module')
 def train_raw(task):
-    return mz.datasets.toy.load_data('train', task)[:5]
+    return mz.datasets.toy.load_data('train', task)
 
 
 def test_fit_transform(train_raw, preprocessor_cls):
